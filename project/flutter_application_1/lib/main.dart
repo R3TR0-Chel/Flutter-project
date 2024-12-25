@@ -322,30 +322,53 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  void _showConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Подтверждение'),
-          content: const Text('Вы уверены, что хотите очистить историю?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Отмена'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Очистка истории
-              },
-              child: const Text('Очистить'),
-            ),
-          ],
-        );
-      },
+ void _showConfirmationDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Подтверждение'),
+        content: const Text('Вы уверены, что хотите очистить историю?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _clearHistory(context);
+            },
+            child: const Text('Очистить'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<void> _clearHistory(BuildContext context) async {
+  const String apiUrl = 'https://retrochelik228.pythonanywhere.com/api/api/clear_history/';
+
+  try {
+    final response = await http.delete(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'])),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось очистить историю: ${response.statusCode}')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Ошибка при подключении к серверу: $e')),
     );
   }
+}
 }
