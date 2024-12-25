@@ -105,7 +105,7 @@ class _ReportPageState extends State<ReportPage> {
                     child: ListTile(
                       title: Text('Пользователь: ${transaction['user']}'),
                       subtitle: Text(
-                          'Валюта: ${transaction['currency']}, Сумма: ${transaction['amount']}, Курс: ${transaction['rate']}, Статус: ${transaction['status']}, Дата: ${formatDate(transaction['date'] ?? '')}'),
+                          'Валюта: ${transaction['currency']}, Сумма: ${transaction['amount']}, Курс: ${transaction['rate']}, Статус: ${transaction['status']}, Дата: ${transaction['timestamp']}'),
                     ),
                   );
                 },
