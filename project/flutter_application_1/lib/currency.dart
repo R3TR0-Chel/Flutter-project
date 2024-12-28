@@ -35,10 +35,10 @@ class _CurrencyPageState extends State<CurrencyPage> {
         setState(() {
           currencies = data.map((currency) {
             return {
-              'id': currency['id'],  // ID для уникальности
+              'id': currency['id'],
               'code': currency['code'],
               'amount': currency['amount'].toString(),
-              'is_main': currency['is_main'], // Основная валюта
+              'is_main': currency['is_main'],
             };
           }).toList();
         });
@@ -47,7 +47,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Ошибка при загрузке валют.'), // Сообщение об ошибке
+        content: Text('Ошибка при загрузке валют.'),
       ));
     } finally {
       setState(() {
@@ -70,7 +70,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
           body: json.encode({
             'code': code,
             'amount': amount,
-            'is_main': isMainCurrency, // Отправляем статус основной валюты
+            'is_main': isMainCurrency,
           }),
         );
 
@@ -92,6 +92,76 @@ class _CurrencyPageState extends State<CurrencyPage> {
         content: Text('Пожалуйста, заполните все поля!'),
       ));
     }
+  }
+
+  // Функция для добавления количества к валюте
+  Future<void> _addAmountToCurrency(String code, String amount) async {
+    final url = Uri.parse('https://retrochelik228.pythonanywhere.com/api/api/currencies/add_amount/');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'code': code,
+          'amount': amount,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Успешно добавлено: ${data['new_amount']}'),
+        ));
+        _getCurrencies(); // Обновляем список валют
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['detail']);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Ошибка: $e'),
+      ));
+    }
+  }
+
+  // Диалоговое окно для добавления количества к валюте
+  void _showAddAmountDialog(String code) {
+    TextEditingController amountController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Добавить количество к $code'),
+          content: TextField(
+            controller: amountController,
+            decoration: const InputDecoration(labelText: 'Количество'),
+            keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Отмена'),
+            ),
+            TextButton(
+              onPressed: () {
+                final amount = amountController.text;
+                if (amount.isNotEmpty) {
+                  _addAmountToCurrency(code, amount);
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Введите количество!')),
+                  );
+                }
+              },
+              child: const Text('Добавить'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Диалоговое окно для добавления валюты
@@ -124,7 +194,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
                     value: isMainCurrency,
                     onChanged: (bool? value) {
                       setState(() {
-                        isMainCurrency = value ?? false; // Убедимся, что получаем boolean значение
+                        isMainCurrency = value ?? false;
                       });
                     },
                   ),
@@ -135,7 +205,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Закрыть окно без сохранения
+                Navigator.pop(context);
               },
               child: const Text('Отмена'),
             ),
@@ -152,7 +222,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
   @override
   void initState() {
     super.initState();
-    _getCurrencies(); // Загружаем валюты при инициализации
+    _getCurrencies();
   }
 
   @override
@@ -170,9 +240,20 @@ class _CurrencyPageState extends State<CurrencyPage> {
                 return ListTile(
                   title: Text(currency['code']),
                   subtitle: Text('Количество: ${currency['amount']}'),
-                  trailing: currency['is_main']
-                      ? const Icon(Icons.star, color: Colors.yellow) // Иконка для основной валюты
-                      : const Icon(Icons.currency_exchange),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      currency['is_main']
+                          ? const Icon(Icons.star, color: Colors.yellow)
+                          : const Icon(Icons.currency_exchange),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          _showAddAmountDialog(currency['code']);
+                        },
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

@@ -170,7 +170,7 @@ class _MainPageState extends State<MainPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ReportPage()),
+                  MaterialPageRoute(builder: (context) => const CashboxPage()),
                 );
               },
             ),
@@ -180,7 +180,7 @@ class _MainPageState extends State<MainPage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const CashboxPage()),
+                  MaterialPageRoute(builder: (context) => const ReportPage()),
                 );
               },
             ),
