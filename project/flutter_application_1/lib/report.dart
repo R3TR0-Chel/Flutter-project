@@ -71,7 +71,7 @@ class _ReportPageState extends State<ReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Отчет'),
+        title: const Text('Касса'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -84,9 +84,9 @@ class _ReportPageState extends State<ReportPage> {
                 Text('KGS в базе: $totalKgsAmount'),
                 Row(
                   children: [
-                    Text('Средний курс покупки: ${averageBuyRate.toStringAsFixed(2)}'),
+                    Text('Среднее значение покупки: ${averageBuyRate.toStringAsFixed(2)}'),
                     const SizedBox(width: 10),
-                    Text('Средний курс продажи: ${averageSellRate.toStringAsFixed(2)}'),
+                    Text('Средний значение продажи: ${averageSellRate.toStringAsFixed(2)}'),
                   ],
                 ),
               ],

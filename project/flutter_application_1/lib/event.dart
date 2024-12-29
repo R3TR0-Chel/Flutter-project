@@ -76,11 +76,11 @@ class _EventPageState extends State<EventPage> {
                     return ListTile(
                       leading: Icon(
                         transaction['status'] == 'buy'
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward,
                         color: transaction['status'] == 'buy'
-                            ? Colors.green
-                            : Colors.red,
+                            ? Colors.red
+                            : Colors.green,
                       ),
                       title: Text('Валюта: $currencyCode'),  // Выводим код валюты
                       subtitle: Text(
@@ -89,8 +89,8 @@ class _EventPageState extends State<EventPage> {
                         transaction['status'] == 'buy' ? 'Покупка' : 'Продажа',
                         style: TextStyle(
                           color: transaction['status'] == 'buy'
-                              ? Colors.green
-                              : Colors.red,
+                              ? Colors.red
+                              : Colors.green,
                         ),
                       ),
                     );

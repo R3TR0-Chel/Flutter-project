@@ -7,7 +7,7 @@ class CashboxPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Касса'),
+        title: const Text('Отчет'),
       ),
       body: const Center(
         child: Text('Страница кассы'),
