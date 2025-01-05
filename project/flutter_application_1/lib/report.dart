@@ -15,20 +15,22 @@ class _ReportPageState extends State<ReportPage> {
   double averageSellRate = 0.0;
   double profit = 0.0;
 
-  List<dynamic> transactions = [];  // Список транзакций
+  List<dynamic> transactions = [];
+  List<dynamic> filteredTransactions = [];
+  List<String> currencies = ["Все валюты"];
+  String selectedCurrency = "Все валюты";
+  String selectedStatus = "Все";
 
   @override
   void initState() {
     super.initState();
-    fetchReport();  // Запрашиваем отчет при загрузке страницы
+    fetchReport();
   }
 
-  // Метод для запроса отчета с API
   Future<void> fetchReport() async {
     try {
-      // Запрос для отчета
+      // Запрос отчета
       final reportResponse = await http.get(Uri.parse('https://retrochelik228.pythonanywhere.com/api/api/reports/'));
-      
       if (reportResponse.statusCode == 200) {
         Map<String, dynamic> data = json.decode(reportResponse.body);
         setState(() {
@@ -41,13 +43,17 @@ class _ReportPageState extends State<ReportPage> {
         throw Exception('Не удалось загрузить отчет');
       }
 
-      // Запрос для истории транзакций
+      // Запрос истории транзакций
       final transactionsResponse = await http.get(Uri.parse('https://retrochelik228.pythonanywhere.com/api/api/transactions/'));
-
       if (transactionsResponse.statusCode == 200) {
         List<dynamic> transactionData = json.decode(transactionsResponse.body);
         setState(() {
           transactions = transactionData;
+          filteredTransactions = transactions;
+
+          // Получение списка уникальных валют
+          currencies = ["Все валюты"];
+          currencies.addAll(transactionData.map((t) => t['currency']['code']).toSet().cast<String>());
         });
       } else {
         throw Exception('Не удалось загрузить историю транзакций');
@@ -57,14 +63,22 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
-  // Метод для форматирования даты
-  String formatDate(String dateString) {
-    try {
-      DateTime date = DateTime.parse(dateString);  // Преобразование строки в объект DateTime
-      return '${date.day}-${date.month}-${date.year} ${date.hour}:${date.minute}';
-    } catch (e) {
-      return 'Неверный формат даты';
-    }
+  // Фильтрация транзакций
+  void filterTransactions() {
+    setState(() {
+      filteredTransactions = transactions.where((transaction) {
+        // Проверяем совпадение валюты
+        final matchesCurrency = selectedCurrency == "Все валюты" || transaction['currency']['code'] == selectedCurrency;
+        // Проверяем совпадение статуса
+        final matchesStatus = selectedStatus == "Все" || transaction['status'] == selectedStatus;
+        return matchesCurrency && matchesStatus;
+      }).toList();
+
+      // Проверяем результат фильтрации
+      if (filteredTransactions.isEmpty) {
+        print("Нет подходящих транзакций для текущих фильтров");
+      }
+    });
   }
 
   @override
@@ -77,7 +91,6 @@ class _ReportPageState extends State<ReportPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Контейнер с количеством KGS, средним курсом и прибылью
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -86,7 +99,7 @@ class _ReportPageState extends State<ReportPage> {
                   children: [
                     Text('Среднее значение покупки: ${averageBuyRate.toStringAsFixed(2)}'),
                     const SizedBox(width: 10),
-                    Text('Средний значение продажи: ${averageSellRate.toStringAsFixed(2)}'),
+                    Text('Среднее значение продажи: ${averageSellRate.toStringAsFixed(2)}'),
                   ],
                 ),
               ],
@@ -94,18 +107,79 @@ class _ReportPageState extends State<ReportPage> {
             const SizedBox(height: 20),
             Text('Прибыль: $profit'),
             const SizedBox(height: 20),
+            // Фильтры
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Выберите валюту:", style: TextStyle(fontWeight: FontWeight.bold)),
+                      DropdownButtonFormField<String>(
+                        value: selectedCurrency,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                        ),
+                        items: currencies.map((currency) {
+                          return DropdownMenuItem(
+                            value: currency,
+                            child: Text(currency),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCurrency = value!;
+                            filterTransactions();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Выберите статус:", style: TextStyle(fontWeight: FontWeight.bold)),
+                      DropdownButtonFormField<String>(
+                        value: selectedStatus,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                        ),
+                        items: ["Все", "buy", "sell"].map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedStatus = value!;
+                            filterTransactions();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             // Список транзакций
             Expanded(
               child: ListView.builder(
-                itemCount: transactions.length,
+                itemCount: filteredTransactions.length,
                 itemBuilder: (context, index) {
-                  var transaction = transactions[index];
+                  var transaction = filteredTransactions[index];
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
                       title: Text('Пользователь: ${transaction['user']}'),
                       subtitle: Text(
-                          'Валюта: ${transaction['currency']}, Сумма: ${transaction['amount']}, Курс: ${transaction['rate']}, Статус: ${transaction['status']}, Дата: ${transaction['timestamp']}'),
+                          'Валюта: ${transaction['currency']['code']}, Сумма: ${transaction['amount']}, Курс: ${transaction['rate']}, Статус: ${transaction['status']}, Дата: ${transaction['timestamp']}'),
                     ),
                   );
                 },
